@@ -97,3 +97,58 @@ This README is:
 - ✅ **Visually appealing** - Emojis and badges
 - ✅ **GitHub ready** - Proper markdown formatting
 - ✅ **Practical** - Quick start and troubleshooting
+
+
+
+The "🗑️ Clear All Data" button will remove all existing data from the dashboard. After clearing, when you upload new test results, only your uploaded data will be displayed.
+
+Here's how it works:
+
+📋 Data Management
+✅ Clear All Data Button
+Click 🗑️ Clear All Data to remove ALL existing test results
+
+This clears:
+
+🤖 Automated tests
+
+✍️ Manual tests
+
+🎮 Maths quiz results
+
+All statistics and charts
+
+Dashboard will show zero results
+
+📁 Uploading New Data
+After clearing, you can upload:
+
+🤖 Automated Tests - Load JSON file from Playwright
+
+✍️ Manual Testing - Add manual test entries
+
+🎮 Maths Quiz Game - Import quiz results
+
+💡 Quick Steps
+Clear current data → Click 🗑️ Clear All Data
+
+Upload your data → Use the appropriate import/upload button
+
+View results → Only your uploaded data appears
+
+⚠️ Important Notes
+Action	Result
+Clear All Data	Removes EVERYTHING (automated, manual, quiz results)
+Upload Automated Tests	Adds to existing data (unless you cleared first)
+Manual Testing	Adds to existing data
+Maths Quiz	Adds to existing data
+🎯 Best Practice
+If you want ONLY your uploaded data:
+
+Click 🗑️ Clear All Data first
+
+Then upload your test results
+
+Dashboard will show ONLY what you uploaded
+
+Tip: The sample data (Emma, Liam, Sophia, Oliver's quizzes) is just demo data. You can clear it before adding your data or JSON file and so it will then show just your real test results! 🚀
