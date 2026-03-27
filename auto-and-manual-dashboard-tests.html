@@ -372,7 +372,9 @@
     // ============ AUTOMATED TESTS ============
     function loadTestData(data, sourceType) {
         automatedTests = [];
-        if (data.suites) {
+
+        // 1) Playwright-style JSON: { suites: [...] }
+        if (data && data.suites) {
             for (const suite of data.suites) {
                 if (suite.specs) {
                     for (const spec of suite.specs) {
@@ -393,59 +395,27 @@
                 }
             }
         }
+
+        // 2) Simple JSON array: [ { Test_case_name, Status, ... }, ... ]
+        else if (Array.isArray(data)) {
+    for (const testCase of data) {
+        automatedTests.push({
+            name: testCase.Test_case_name || testCase.name || 'Unnamed test',
+            status: testCase.Status === 'Pass'
+                ? 'Pass'
+                : testCase.Status === 'Fail'
+                ? 'Fail'
+                : 'Not Run',
+            duration: typeof testCase.Duration === 'number' ? testCase.Duration : 0,
+            type: 'Manual Review / Power Case',
+            source: testCase.Test_suite || sourceType
+        });
+    }
+}
+
         updateCombinedDashboard();
         alert(`✅ Loaded ${automatedTests.length} automated tests`);
         switchTab('view');
-    }
-    
-    function loadSampleWebsiteData() {
-        const sampleData = {
-            "suites": [{
-                "specs": [{
-                    "file": "website.spec.ts",
-                    "tests": [
-                        {"title": "Homepage loads", "results": [{"status": "passed", "duration": 506}]},
-                        {"title": "Navigation works", "results": [{"status": "passed", "duration": 259}]},
-                        {"title": "Newsletter form", "results": [{"status": "passed", "duration": 223}]},
-                        {"title": "Login button", "results": [{"status": "failed", "duration": 1234}]}
-                    ]
-                }]
-            }]
-        };
-        loadTestData(sampleData, "Website");
-    }
-    
-    function loadSamplePythonData() {
-        const sampleData = {
-            "suites": [{
-                "specs": [{
-                    "file": "python_tests.py",
-                    "tests": [
-                        {"title": "Addition function", "results": [{"status": "passed", "duration": 45}]},
-                        {"title": "Subtraction function", "results": [{"status": "passed", "duration": 52}]},
-                        {"title": "Multiplication", "results": [{"status": "passed", "duration": 67}]},
-                        {"title": "Division by zero", "results": [{"status": "failed", "duration": 89}]}
-                    ]
-                }]
-            }]
-        };
-        loadTestData(sampleData, "Python");
-    }
-    
-    function loadSampleAPIData() {
-        const sampleData = {
-            "suites": [{
-                "specs": [{
-                    "file": "api_tests.js",
-                    "tests": [
-                        {"title": "GET /questions", "results": [{"status": "passed", "duration": 123}]},
-                        {"title": "POST /answer", "results": [{"status": "passed", "duration": 156}]},
-                        {"title": "GET /score", "results": [{"status": "failed", "duration": 234}]}
-                    ]
-                }]
-            }]
-        };
-        loadTestData(sampleData, "API");
     }
     
     // ============ MANUAL TESTS ============

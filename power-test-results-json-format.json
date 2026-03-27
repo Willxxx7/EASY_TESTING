@@ -1,0 +1,148 @@
+{
+  "suites": [
+    {
+      "specs": [
+        {
+          "file": "power_efficiency_test_cases",
+          "tests": [
+            {
+              "title": "Verify_USB_Input_Device_entering_Selective_Suspend",
+              "results": [
+                {
+                  "status": "unknown",
+                  "duration": 0
+                }
+              ]
+            },
+            {
+              "title": "Verify_USB_Composite_Device_entering_Selective_Suspend",
+              "results": [
+                {
+                  "status": "unknown",
+                  "duration": 0
+                }
+              ]
+            },
+            {
+              "title": "Verify_CPU_utilization_below_threshold",
+              "results": [
+                {
+                  "status": "unknown",
+                  "duration": 0
+                }
+              ]
+            },
+            {
+              "title": "Verify_PCIe_ASPM_state_after_fix",
+              "results": [
+                {
+                  "status": "unknown",
+                  "duration": 0
+                }
+              ]
+            },
+            {
+              "title": "Verify_timer_resolution_reverts_to_15.6ms",
+              "results": [
+                {
+                  "status": "unknown",
+                  "duration": 0
+                }
+              ]
+            },
+            {
+              "title": "Verify_display_timeout_on_battery_≤5min",
+              "results": [
+                {
+                  "status": "unknown",
+                  "duration": 0
+                }
+              ]
+            },
+            {
+              "title": "Verify_sleep_timeout_on_battery_≤30min",
+              "results": [
+                {
+                  "status": "unknown",
+                  "duration": 0
+                }
+              ]
+            },
+            {
+              "title": "Verify_display_timeout_plugged_in_≤10min",
+              "results": [
+                {
+                  "status": "unknown",
+                  "duration": 0
+                }
+              ]
+            },
+            {
+              "title": "Verify_sleep_timeout_plugged_in_≤30min",
+              "results": [
+                {
+                  "status": "unknown",
+                  "duration": 0
+                }
+              ]
+            },
+            {
+              "title": "Verify_S3_sleep_support_or_alternative",
+              "results": [
+                {
+                  "status": "unknown",
+                  "duration": 0
+                }
+              ]
+            },
+            {
+              "title": "Verify_WMM_Power_Save_on_access_point",
+              "results": [
+                {
+                  "status": "unknown",
+                  "duration": 0
+                }
+              ]
+            },
+            {
+              "title": "Verify_balanced_video_power_policy_on_battery",
+              "results": [
+                {
+                  "status": "unknown",
+                  "duration": 0
+                }
+              ]
+            },
+            {
+              "title": "Verify_video_quality_policy_plugged_in",
+              "results": [
+                {
+                  "status": "unknown",
+                  "duration": 0
+                }
+              ]
+            },
+            {
+              "title": "Verify_802.11_maximum_performance_policy_plugged_in",
+              "results": [
+                {
+                  "status": "unknown",
+                  "duration": 0
+                }
+              ]
+            },
+            {
+              "title": "Verify_driver_health_for_Intel_Wireless_Bluetooth",
+              "results": [
+                {
+                  "status": "unknown",
+                  "duration": 0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

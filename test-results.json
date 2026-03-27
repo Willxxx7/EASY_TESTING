@@ -1,0 +1,167 @@
+[
+  {
+    "Test_case_ID": "1",
+    "Test_suite": "Power_Efficiency",
+    "Test_case_name": "Verify_USB_Input_Device_entering_Selective_Suspend",
+    "Priority": "High",
+    "Preconditions": "Lenovo P037065 on battery, USB Input Device (HID) attached",
+    "Test_steps": "1. Open PowerCfg /DeviceQuery SBNP\n2. Check that USB Input Device (VID_045E&PID_00CB) is listed as able to enter Selective Suspend\n3. Run another 60‑second power efficiency scan, unplugged.\n4. Confirm no 'USB Suspend: USB Device not Entering Selective Suspend' error for this device.",
+    "Expected_result": "No 'USB Suspend' error for the USB Input Device in the new report.",
+    "Actual_result": "",
+    "Status": ""
+  },
+  {
+    "Test_case_ID": "2",
+    "Test_suite": "Power_Efficiency",
+    "Test_case_name": "Verify_USB_Composite_Device_entering_Selective_Suspend",
+    "Priority": "High",
+    "Preconditions": "Lenovo P037065 on battery, USB Composite Device attached (webcam/biometrics)",
+    "Test_steps": "1. Confirm USB Composite Device (VID_04F2&PID_B6D0) is listed in Device Manager.\n2. Enable 'Allow the computer to turn off this device to save power' in Device Manager for this device.\n3. Run another 60‑second power efficiency scan, unplugged.\n4. Check USB Suspend results.",
+    "Expected_result": "No 'USB Suspend' error for the USB Composite Device in the new report.",
+    "Actual_result": "",
+    "Status": ""
+  },
+  {
+    "Test_case_ID": "3",
+    "Test_suite": "Power_Efficiency",
+    "Test_case_name": "Verify_CPU_utilization_below_threshold",
+    "Priority": "Medium",
+    "Preconditions": "Laptop idle, no active apps (except background services)",
+    "Test_steps": "1. Close all user apps (e.g., VLC, browser, office).\n2. Run power efficiency scan for 60 seconds, unplugged.\n3. Check 'Average Utilization (%)' in CPU Utilization section.",
+    "Expected_result": "Average CPU utilization ≤10% during idle tracing.",
+    "Actual_result": "",
+    "Status": ""
+  },
+  {
+    "Test_case_ID": "4",
+    "Test_suite": "Power_Efficiency",
+    "Test_case_name": "Verify_PCIe_ASPM_state_after_fix",
+    "Priority": "Medium",
+    "Preconditions": "BIOS supports ASPM",
+    "Test_steps": "1. Enter BIOS/UEFI and enable PCIe ASPM (if offered).\n2. Save and reboot.\n3. Run powercfg /energy and check PCIe ASPM status.\n4. Analyse report.",
+    "Expected_result": "No 'PCI Express Active‑State Power Management (ASPM) Disabled' warning.",
+    "Actual_result": "",
+    "Status": ""
+  },
+  {
+    "Test_case_ID": "5",
+    "Test_suite": "Power_Efficiency",
+    "Test_case_name": "Verify_timer_resolution_reverts_to_15.6ms",
+    "Priority": "High",
+    "Preconditions": "VLC not running, system idle",
+    "Test_steps": "1. Kill any running VLC processes (PID 29840 or similar).\n2. Open CMD as admin and run: powercfg /energy /duration 60.\n3. Check 'Timer Resolution' section in report.\n4. Confirm no application requesting 50000ns or lower.",
+    "Expected_result": "Timer stays at 156250 100ns units (15.6ms); no lower timer requests outstanding.",
+    "Actual_result": "",
+    "Status": ""
+  },
+  {
+    "Test_case_ID": "6",
+    "Test_suite": "Power_Efficiency",
+    "Test_case_name": "Verify_display_timeout_on_battery_≤5min",
+    "Priority": "High",
+    "Preconditions": "On battery, not plugged in",
+    "Test_steps": "1. Open Power Options → Edit Plan Settings for 'OEM Balanced' (on battery).\n2. Set 'Turn off the display' to ≤5 minutes.\n3. Run power efficiency scan unplugged.\n4. Check 'Power Policy: Display timeout is long (On Battery)' warning.",
+    "Expected_result": "No 'Display timeout is long (On Battery)' warning.",
+    "Actual_result": "",
+    "Status": ""
+  },
+  {
+    "Test_case_ID": "7",
+    "Test_suite": "Power_Efficiency",
+    "Test_case_name": "Verify_sleep_timeout_on_battery_≤30min",
+    "Priority": "High",
+    "Preconditions": "On battery, not plugged in",
+    "Test_steps": "1. Edit power plan (OEM Balanced) on battery.\n2. Set 'Put the computer to sleep' to ≤30 minutes.\n3. Run power efficiency scan unplugged.\n4. Check sleep timeout warning.",
+    "Expected_result": "No 'Sleep timeout is long (On Battery)' warning.",
+    "Actual_result": "",
+    "Status": ""
+  },
+  {
+    "Test_case_ID": "8",
+    "Test_suite": "Power_Efficiency",
+    "Test_case_name": "Verify_display_timeout_plugged_in_≤10min",
+    "Priority": "Medium",
+    "Preconditions": "Plugged in, external monitor not forcing longer timers",
+    "Test_steps": "1. Plug in device.\n2. Edit power plan (OEM Balanced) for plugged‑in scenario.\n3. Set display timeout ≤10 minutes.\n4. Run energy report.",
+    "Expected_result": "No 'Display timeout is long (Plugged In)' warning.",
+    "Actual_result": "",
+    "Status": ""
+  },
+  {
+    "Test_case_ID": "9",
+    "Test_suite": "Power_Efficiency",
+    "Test_case_name": "Verify_sleep_timeout_plugged_in_≤30min",
+    "Priority": "Medium",
+    "Preconditions": "Plugged in, no UPS or scheduled tasks blocking sleep",
+    "Test_steps": "1. Plug in device.\n2. Edit power plan sleep timeout to ≤30 minutes.\n3. Run powercfg /energy.\n4. Check sleep timeout warning.",
+    "Expected_result": "No 'Sleep timeout is long (Plugged In)' warning.",
+    "Actual_result": "",
+    "Status": ""
+  },
+  {
+    "Test_case_ID": "10",
+    "Test_suite": "Power_Efficiency",
+    "Test_case_name": "Verify_S3_sleep_support_or_alternative",
+    "Priority": "Medium",
+    "Preconditions": "S3 not supported per report",
+    "Test_steps": "1. Check if S3 sleep is enabled in BIOS (if option exists).\n2. If not supported, confirm S4/hibernate works.\n3. Run: powercfg /a to list available sleep states.\n4. Run power efficiency scan during short idle period.",
+    "Expected_result": "System reports supported sleep states matching hardware (S4/hibernate or Connected Standby)",
+    "Actual_result": "",
+    "Status": ""
+  },
+  {
+    "Test_case_ID": "11",
+    "Test_suite": "Power_Efficiency",
+    "Test_case_name": "Verify_WMM_Power_Save_on_access_point",
+    "Priority": "High",
+    "Preconditions": "Connected to a different Wi‑Fi network (managed AP)",
+    "Test_steps": "1. Connect to Wi‑Fi network that supports WMM Power Save (e.g., corporate AP).\n2. Run powercfg /energy on battery.\n3. Check 'Wireless access point does not support WMM Power Save' message.",
+    "Expected_result": "No WMM Power Save warning when using an AP that supports it.",
+    "Actual_result": "",
+    "Status": ""
+  },
+  {
+    "Test_case_ID": "12",
+    "Test_suite": "Power_Efficiency",
+    "Test_case_name": "Verify_balanced_video_power_policy_on_battery",
+    "Priority": "Medium",
+    "Preconditions": "On battery, not running VLC or other players",
+    "Test_steps": "1. Ensure active plan is 'OEM Balanced' on battery.\n2. Check 'Video Quality (On Battery)' setting.\n3. Confirm it is set to 'Balance Video Quality and Power Savings'.\n4. Run energy report.",
+    "Expected_result": "No harmful video quality‑power mismatch warning on battery.",
+    "Actual_result": "",
+    "Status": ""
+  },
+  {
+    "Test_case_ID": "13",
+    "Test_suite": "Power_Efficiency",
+    "Test_case_name": "Verify_video_quality_policy_plugged_in",
+    "Priority": "Moderate",
+    "Preconditions": "Plugged in",
+    "Test_steps": "1. While plugged in, check video quality setting.\n2. Optionally change to 'Optimize for Power Savings' if product owner allows.\n3. Run energy report.",
+    "Expected_result": "No excessive power‑wasting video quality setting when plugged in (if tuned to save power)",
+    "Actual_result": "",
+    "Status": ""
+  },
+  {
+    "Test_case_ID": "14",
+    "Test_suite": "Power_Efficiency",
+    "Test_case_name": "Verify_802.11_maximum_performance_policy_plugged_in",
+    "Priority": "Medium",
+    "Preconditions": "Plugged in",
+    "Test_steps": "1. Check 802.11 power policy for wireless adapter (Device Manager → Properties → Power Management).\n2. If allowed, set adapter to lower power mode when plugged in.\n3. Run powercfg /energy.",
+    "Expected_result": "No '802.11 Radio Power Policy is Maximum Performance (Plugged In)' warning (or reduced to lower performance)",
+    "Actual_result": "",
+    "Status": ""
+  },
+  {
+    "Test_case_ID": "15",
+    "Test_suite": "Power_Efficiency",
+    "Test_case_name": "Verify_driver_health_for_Intel_Wireless_Bluetooth",
+    "Priority": "High",
+    "Preconditions": "Intel Wireless Bluetooth (VID_8087&PID_0026) present",
+    "Test_steps": "1. Open Device Manager.\n2. Update/reinstall Intel Wireless Bluetooth driver.\n3. Reboot.\n4. Run powercfg /energy.\n5. Check driver status and problem code.",
+    "Expected_result": "Device status not 0x1802400 and no problem code 0x16.",
+    "Actual_result": "",
+    "Status": ""
+  }
+]
