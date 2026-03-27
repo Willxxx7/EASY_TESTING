@@ -756,8 +756,13 @@
             try {
                 const data = JSON.parse(e.target.result);
                 loadTestData(data, "Uploaded");
+                // Optionally: remove this success popup if you prefer a quiet load
+                // alert(`✅ Loaded ${automatedTests.length} automated tests`);
             } catch (err) {
-                alert('❌ Error loading file. Make sure it\'s a valid JSON file.');
+                // 1) Show the real error in the console
+                console.error('JSON parse error:', err.message);
+                // 2) Optional: show detail in the alert, or simply remove it
+                // alert('❌ Failed to parse JSON:\n' + err.message);
             }
         };
         reader.readAsText(file);
