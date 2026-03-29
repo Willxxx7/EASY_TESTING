@@ -8,7 +8,9 @@
     "Test_steps": "1. Open PowerCfg /DeviceQuery SBNP\n2. Check that USB Input Device (VID_045E&PID_00CB) is listed as able to enter Selective Suspend\n3. Run another 60‑second power efficiency scan, unplugged.\n4. Confirm no 'USB Suspend: USB Device not Entering Selective Suspend' error for this device.",
     "Expected_result": "No 'USB Suspend' error for the USB Input Device in the new report.",
     "Actual_result": "",
-    "Status": ""
+    "Status": "",
+    "Comments": "Ensure HID device is not excluded from power‑saving settings.",
+    "Fixes": "Enable 'Allow the computer to turn off this device to save power' in Device Manager for the USB HID device."
   },
   {
     "Test_case_ID": "2",
@@ -19,7 +21,9 @@
     "Test_steps": "1. Confirm USB Composite Device (VID_04F2&PID_B6D0) is listed in Device Manager.\n2. Enable 'Allow the computer to turn off this device to save power' in Device Manager for this device.\n3. Run another 60‑second power efficiency scan, unplugged.\n4. Check USB Suspend results.",
     "Expected_result": "No 'USB Suspend' error for the USB Composite Device in the new report.",
     "Actual_result": "",
-    "Status": ""
+    "Status": "",
+    "Comments": "Do not enable this for devices that provide power‑sensitive functions.",
+    "Fixes": "Enable USB selective suspend for the composite device in Device Manager and retest."
   },
   {
     "Test_case_ID": "3",
@@ -30,7 +34,9 @@
     "Test_steps": "1. Close all user apps (e.g., VLC, browser, office).\n2. Run power efficiency scan for 60 seconds, unplugged.\n3. Check 'Average Utilization (%)' in CPU Utilization section.",
     "Expected_result": "Average CPU utilization ≤10% during idle tracing.",
     "Actual_result": "",
-    "Status": ""
+    "Status": "",
+    "Comments": "High idle CPU often caused by background services or drivers.",
+    "Fixes": "Disable or tune CPU‑intensive background services, drivers, or utilities; retest with minimal load."
   },
   {
     "Test_case_ID": "4",
@@ -41,7 +47,9 @@
     "Test_steps": "1. Enter BIOS/UEFI and enable PCIe ASPM (if offered).\n2. Save and reboot.\n3. Run powercfg /energy and check PCIe ASPM status.\n4. Analyse report.",
     "Expected_result": "No 'PCI Express Active‑State Power Management (ASPM) Disabled' warning.",
     "Actual_result": "",
-    "Status": ""
+    "Status": "",
+    "Comments": "ASPM can improve PCIe‑link power but may affect latency‑sensitive hardware.",
+    "Fixes": "Enable ASPM in BIOS and retest; if errors occur, review hardware compatibility and use vendor‑recommended settings."
   },
   {
     "Test_case_ID": "5",
@@ -52,7 +60,9 @@
     "Test_steps": "1. Kill any running VLC processes (PID 29840 or similar).\n2. Open CMD as admin and run: powercfg /energy /duration 60.\n3. Check 'Timer Resolution' section in report.\n4. Confirm no application requesting 50000ns or lower.",
     "Expected_result": "Timer stays at 156250 100ns units (15.6ms); no lower timer requests outstanding.",
     "Actual_result": "",
-    "Status": ""
+    "Status": "",
+    "Comments": "Low timer resolution keeps CPU from entering low‑power states more often.",
+    "Fixes": "Terminate any app locking timer resolution (e.g., VLC), or restart services that manage it; retest with no blocking apps."
   },
   {
     "Test_case_ID": "6",
@@ -63,7 +73,9 @@
     "Test_steps": "1. Open Power Options → Edit Plan Settings for 'OEM Balanced' (on battery).\n2. Set 'Turn off the display' to ≤5 minutes.\n3. Run power efficiency scan unplugged.\n4. Check 'Power Policy: Display timeout is long (On Battery)' warning.",
     "Expected_result": "No 'Display timeout is long (On Battery)' warning.",
     "Actual_result": "",
-    "Status": ""
+    "Status": "",
+    "Comments": "Longer timeouts unnecessarily waste battery.",
+    "Fixes": "Adjust the 'Turn off the display' battery setting to 5 minutes or less and re‑run the energy report."
   },
   {
     "Test_case_ID": "7",
@@ -74,7 +86,9 @@
     "Test_steps": "1. Edit power plan (OEM Balanced) on battery.\n2. Set 'Put the computer to sleep' to ≤30 minutes.\n3. Run power efficiency scan unplugged.\n4. Check sleep timeout warning.",
     "Expected_result": "No 'Sleep timeout is long (On Battery)' warning.",
     "Actual_result": "",
-    "Status": ""
+    "Status": "",
+    "Comments": "Extended sleep timeouts reduce power savings.",
+    "Fixes": "Reduce sleep timeout on battery to 30 minutes or less and re‑run the energy report."
   },
   {
     "Test_case_ID": "8",
@@ -85,7 +99,9 @@
     "Test_steps": "1. Plug in device.\n2. Edit power plan (OEM Balanced) for plugged‑in scenario.\n3. Set display timeout ≤10 minutes.\n4. Run energy report.",
     "Expected_result": "No 'Display timeout is long (Plugged In)' warning.",
     "Actual_result": "",
-    "Status": ""
+    "Status": "",
+    "Comments": "On‑plugged settings can still be too lenient for power efficiency.",
+    "Fixes": "Reduce display timeout when plugged in to 10 minutes or less and re‑run the energy report."
   },
   {
     "Test_case_ID": "9",
@@ -96,7 +112,9 @@
     "Test_steps": "1. Plug in device.\n2. Edit power plan sleep timeout to ≤30 minutes.\n3. Run powercfg /energy.\n4. Check sleep timeout warning.",
     "Expected_result": "No 'Sleep timeout is long (Plugged In)' warning.",
     "Actual_result": "",
-    "Status": ""
+    "Status": "",
+    "Comments": "Sleep timeout on‑plugged still affects power usage slightly.",
+    "Fixes": "Lower the sleep timeout when plugged in to 30 minutes or less and re‑run the energy report."
   },
   {
     "Test_case_ID": "10",
@@ -107,7 +125,9 @@
     "Test_steps": "1. Check if S3 sleep is enabled in BIOS (if option exists).\n2. If not supported, confirm S4/hibernate works.\n3. Run: powercfg /a to list available sleep states.\n4. Run power efficiency scan during short idle period.",
     "Expected_result": "System reports supported sleep states matching hardware (S4/hibernate or Connected Standby)",
     "Actual_result": "",
-    "Status": ""
+    "Status": "",
+    "Comments": "S3 is not always supported on modern systems; S4 or Connected Standby may be preferred.",
+    "Fixes": "Enable S4/hibernate or Connected Standby in BIOS and OS power settings, and re‑test sleep behaviour."
   },
   {
     "Test_case_ID": "11",
@@ -118,7 +138,9 @@
     "Test_steps": "1. Connect to Wi‑Fi network that supports WMM Power Save (e.g., corporate AP).\n2. Run powercfg /energy on battery.\n3. Check 'Wireless access point does not support WMM Power Save' message.",
     "Expected_result": "No WMM Power Save warning when using an AP that supports it.",
     "Actual_result": "",
-    "Status": ""
+    "Status": "",
+    "Comments": "AP must also support WMM Power Save, not just the client.",
+    "Fixes": "Ensure both wireless adapter and AP support WMM Power Save; request AP configuration upgrade if needed."
   },
   {
     "Test_case_ID": "12",
@@ -129,7 +151,9 @@
     "Test_steps": "1. Ensure active plan is 'OEM Balanced' on battery.\n2. Check 'Video Quality (On Battery)' setting.\n3. Confirm it is set to 'Balance Video Quality and Power Savings'.\n4. Run energy report.",
     "Expected_result": "No harmful video quality‑power mismatch warning on battery.",
     "Actual_result": "",
-    "Status": ""
+    "Status": "",
+    "Comments": "High video quality on battery significantly increases power draw.",
+    "Fixes": "Set video quality policy on battery to 'Balance Video Quality and Power Savings' and re‑run the report."
   },
   {
     "Test_case_ID": "13",
@@ -140,7 +164,9 @@
     "Test_steps": "1. While plugged in, check video quality setting.\n2. Optionally change to 'Optimize for Power Savings' if product owner allows.\n3. Run energy report.",
     "Expected_result": "No excessive power‑wasting video quality setting when plugged in (if tuned to save power)",
     "Actual_result": "",
-    "Status": ""
+    "Status": "",
+    "Comments": "Plugged‑in usage can still benefit from power‑aware policies.",
+    "Fixes": "Tune video quality policy plugged‑in to a more power‑efficient level and re‑run the energy report."
   },
   {
     "Test_case_ID": "14",
@@ -151,7 +177,9 @@
     "Test_steps": "1. Check 802.11 power policy for wireless adapter (Device Manager → Properties → Power Management).\n2. If allowed, set adapter to lower power mode when plugged in.\n3. Run powercfg /energy.",
     "Expected_result": "No '802.11 Radio Power Policy is Maximum Performance (Plugged In)' warning (or reduced to lower performance)",
     "Actual_result": "",
-    "Status": ""
+    "Status": "",
+    "Comments": "Maximum performance policy on battery is the main concern, but on‑plugged settings still matter.",
+    "Fixes": "Reduce 802.11 power policy to a lower performance level when plugged in and re‑run the energy report."
   },
   {
     "Test_case_ID": "15",
@@ -162,6 +190,8 @@
     "Test_steps": "1. Open Device Manager.\n2. Update/reinstall Intel Wireless Bluetooth driver.\n3. Reboot.\n4. Run powercfg /energy.\n5. Check driver status and problem code.",
     "Expected_result": "Device status not 0x1802400 and no problem code 0x16.",
     "Actual_result": "",
-    "Status": ""
+    "Status": "",
+    "Comments": "Outdated or buggy drivers can cause connectivity and power‑management issues.",
+    "Fixes": "Update Intel Wireless Bluetooth driver to the latest WHQL‑certified version and re‑run the energy report to confirm no WDDM‑related errors."
   }
 ]

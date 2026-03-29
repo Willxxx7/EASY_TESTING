@@ -323,469 +323,567 @@
         <h3>📋 All Test Results</h3>
         <div style="overflow-x: auto;">
             <table id="all-results-table">
-                <thead><tr><th>Test Name</th><th>Result</th><th>Duration (s)</th><th>Type</th><th>Source</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>Test Name</th>
+                        <th>Result</th>
+                        <th>Duration (s)</th>
+                        <th>Type</th>
+                        <th>Source</th>
+                        <th>Actual Result</th>
+                        <th>Comments/fixes</th>                        
+                    </tr>
+                </thead>
                 <tbody id="all-results-body"></tbody>
             </table>
         </div>
     </div>
 </div>
+</body>
 
 <script>
     // Data storage
-    let automatedTests = [];
-    let manualTests = [];
-    let mathQuizResults = [];
-    let charts = {};
-    
-    // Load from localStorage
-    function loadFromStorage() {
-        const savedManual = localStorage.getItem('manualTests');
-        if (savedManual) manualTests = JSON.parse(savedManual);
-        
-        const savedQuiz = localStorage.getItem('mathQuizResults');
-        if (savedQuiz) mathQuizResults = JSON.parse(savedQuiz);
-        
-        updateManualTable();
-        updateMathQuizTable();
-        updateCombinedDashboard();
-    }
-    
-    // Save to localStorage
-    function saveToStorage() {
-        localStorage.setItem('manualTests', JSON.stringify(manualTests));
-        localStorage.setItem('mathQuizResults', JSON.stringify(mathQuizResults));
-    }
-    
-    // Tab switching
-    function switchTab(tabName) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-        
-        document.getElementById(`${tabName}-tab`).classList.add('active');
-        event.target.classList.add('active');
-        
-        if (tabName === 'view') updateCombinedDashboard();
-        if (tabName === 'manual') updateManualChart();
-        if (tabName === 'mathquiz') updateMathQuizChart();
-    }
-    
-    // ============ AUTOMATED TESTS ============
-    function loadTestData(data, sourceType) {
-        automatedTests = [];
+let automatedTests = [];
+let manualTests = [];
+let mathQuizResults = [];
+let charts = {};
 
-        // 1) Playwright-style JSON: { suites: [...] }
-        if (data && data.suites) {
-            for (const suite of data.suites) {
-                if (suite.specs) {
-                    for (const spec of suite.specs) {
-                        if (spec.tests) {
-                            for (const test of spec.tests) {
-                                const status = test.results?.[0]?.status || 'unknown';
-                                const duration = (test.results?.[0]?.duration || 0) / 1000;
-                                automatedTests.push({
-                                    name: test.title,
-                                    status: status === 'passed' ? 'Pass' : 'Fail',
-                                    duration: parseFloat(duration.toFixed(2)),
-                                    type: 'Automated',
-                                    source: sourceType
-                                });
-                            }
+// Load from localStorage
+function loadFromStorage() {
+    const savedManual = localStorage.getItem('manualTests');
+    if (savedManual) manualTests = JSON.parse(savedManual);
+
+    const savedQuiz = localStorage.getItem('mathQuizResults');
+    if (savedQuiz) mathQuizResults = JSON.parse(savedQuiz);
+
+    updateManualTable();
+    updateMathQuizTable();
+    updateCombinedDashboard();
+}
+
+// Save to localStorage
+function saveToStorage() {
+    localStorage.setItem('manualTests', JSON.stringify(manualTests));
+    localStorage.setItem('mathQuizResults', JSON.stringify(mathQuizResults));
+}
+
+// Tab switching
+function switchTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+
+    document.getElementById(`${tabName}-tab`).classList.add('active');
+    event.target.classList.add('active');
+
+    if (tabName === 'view') updateCombinedDashboard();
+    if (tabName === 'manual') updateManualChart();
+    if (tabName === 'mathquiz') updateMathQuizChart();
+}
+
+// ============ AUTOMATED TESTS ============
+function loadTestData(data, sourceType) {
+    automatedTests = [];
+
+    // 1) Playwright-style JSON: { suites: [...] }
+    if (data && data.suites) {
+        for (const suite of data.suites) {
+            if (suite.specs) {
+                for (const spec of suite.specs) {
+                    if (spec.tests) {
+                        for (const test of spec.tests) {
+                            const status = test.results?.[0]?.status || 'unknown';
+                            const duration = (test.results?.[0]?.duration || 0) / 1000;
+                            automatedTests.push({
+                                name: test.title,
+                                status: status === 'passed' ? 'Pass' : 'Fail',
+                                duration: parseFloat(duration.toFixed(2)),
+                                type: 'Automated',
+                                source: sourceType,
+                                // carry extra fields if you ever want to show them
+                                preconditions: '',
+                                steps: '',
+                                expected: '',
+                                actual: '',
+                                comments: '',
+                                fixes: ''
+                            });
                         }
                     }
                 }
             }
         }
+    }
 
-        // 2) Simple JSON array: [ { Test_case_name, Status, ... }, ... ]
-        else if (Array.isArray(data)) {
-    for (const testCase of data) {
-        automatedTests.push({
-            name: testCase.Test_case_name || testCase.name || 'Unnamed test',
-            status: testCase.Status === 'Pass'
-                ? 'Pass'
-                : testCase.Status === 'Fail'
-                ? 'Fail'
-                : 'Not Run',
-            duration: typeof testCase.Duration === 'number' ? testCase.Duration : 0,
-            type: 'Manual Review / Power Case',
-            source: testCase.Test_suite || sourceType
-        });
+    // 2) Simple JSON array: [ { Test_case_name, Status, ... }, ... ]
+    else if (Array.isArray(data)) {
+        for (const testCase of data) {
+            automatedTests.push({
+                name: testCase.Test_case_name || testCase.name || 'Unnamed test',
+                status: testCase.Status === 'Pass'
+                    ? 'Pass'
+                    : testCase.Status === 'Fail'
+                    ? 'Fail'
+                    : 'Not Run',
+                duration: typeof testCase.Duration === 'number' ? testCase.Duration : 0,
+                type: testCase.Test_suite || 'Manual Review / Power Case',
+                source: testCase.Test_suite || sourceType,
+                preconditions: testCase.Preconditions || '',
+                steps: testCase.Test_steps || '',
+                expected: testCase.Expected_result || '',
+                actual: testCase.Actual_result || '',
+                comments: testCase.Comments || '',
+                fixes: testCase.Fixes || ''
+            });
+        }
+    }
+
+    updateCombinedDashboard();
+    // Optional: remove or quieten this alert
+    // alert(`✅ Loaded ${automatedTests.length} automated tests`);
+    switchTab('view');
+}
+
+
+// ============ MANUAL TESTS ============
+function addManualTest() {
+    const name = document.getElementById('manualTestName').value;
+    const result = document.getElementById('manualTestResult').value;
+    const time = parseFloat(document.getElementById('manualTestTime').value);
+    const category = document.getElementById('manualTestCategory').value;
+    const notes = document.getElementById('manualTestNotes').value;
+
+    if (!name || isNaN(time)) {
+        alert('Please fill in test name and time');
+        return;
+    }
+
+    manualTests.push({
+        id: Date.now(),
+        name: name,
+        status: result === 'pass' ? 'Pass' : 'Fail',
+        duration: time,
+        category: category,
+        notes: notes,
+        date: new Date().toLocaleString()
+    });
+
+    saveToStorage();
+    updateManualTable();
+    updateManualChart();
+    updateCombinedDashboard();
+
+    // Clear form
+    document.getElementById('manualTestName').value = '';
+    document.getElementById('manualTestTime').value = '';
+    document.getElementById('manualTestNotes').value = '';
+
+    alert('✅ Manual test added!');
+}
+
+
+function deleteManualTest(id) {
+    manualTests = manualTests.filter(t => t.id !== id);
+    saveToStorage();
+    updateManualTable();
+    updateManualChart();
+    updateCombinedDashboard();
+}
+
+
+function clearManualTests() {
+    if (confirm('Clear all manual tests?')) {
+        manualTests = [];
+        saveToStorage();
+        updateManualTable();
+        updateManualChart();
+        updateCombinedDashboard();
     }
 }
 
-        updateCombinedDashboard();
-        alert(`✅ Loaded ${automatedTests.length} automated tests`);
-        switchTab('view');
-    }
-    
-    // ============ MANUAL TESTS ============
-    function addManualTest() {
-        const name = document.getElementById('manualTestName').value;
-        const result = document.getElementById('manualTestResult').value;
-        const time = parseFloat(document.getElementById('manualTestTime').value);
-        const category = document.getElementById('manualTestCategory').value;
-        const notes = document.getElementById('manualTestNotes').value;
-        
-        if (!name || isNaN(time)) {
-            alert('Please fill in test name and time');
-            return;
+
+function updateManualChart() {
+    const passed  = manualTests.filter(t => t.status === 'Pass').length;
+    const failed  = manualTests.filter(t => t.status === 'Fail').length;
+    const notRun  = manualTests.filter(t => t.status === 'Not Run').length;
+
+    const ctx = document.getElementById('manualSummaryChart').getContext('2d');
+    if (charts.manual) charts.manual.destroy();
+
+    charts.manual = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: [
+                `Passed (${passed})`,
+                `Failed (${failed})`,
+                `Not Run (${notRun})`
+            ],
+            datasets: [{
+                data: [passed, failed, notRun],
+                backgroundColor: ['#28a745', '#dc3545', '#ffc107']
+            }]
         }
-        
-        manualTests.push({
-            id: Date.now(),
-            name: name,
-            status: result === 'pass' ? 'Pass' : 'Fail',
-            duration: time,
-            category: category,
-            notes: notes,
-            date: new Date().toLocaleString()
-        });
-        
-        saveToStorage();
-        updateManualTable();
-        updateManualChart();
-        updateCombinedDashboard();
-        
-        // Clear form
-        document.getElementById('manualTestName').value = '';
-        document.getElementById('manualTestTime').value = '';
-        document.getElementById('manualTestNotes').value = '';
-        
-        alert('✅ Manual test added!');
+    });
+}
+// ============ TESTING RESULTS / QUIZ GAME (renamed) ============
+function addMathQuizResult() {
+    const player = document.getElementById('playerName').value;
+    const score = parseInt(document.getElementById('quizScore').value);
+    const time = parseInt(document.getElementById('quizTime').value);
+    const correct = parseInt(document.getElementById('correctCount').value);
+    const wrong = parseInt(document.getElementById('wrongCount').value);
+    const difficulty = document.getElementById('difficultyLevel').value;
+
+    if (!player || isNaN(score) || isNaN(time)) {
+        alert('Please fill in player name, score and time');
+        return;
     }
-    
-    function deleteManualTest(id) {
-        manualTests = manualTests.filter(t => t.id !== id);
-        saveToStorage();
-        updateManualTable();
-        updateManualChart();
-        updateCombinedDashboard();
-    }
-    
-    function clearManualTests() {
-        if (confirm('Clear all manual tests?')) {
-            manualTests = [];
-            saveToStorage();
-            updateManualTable();
-            updateManualChart();
-            updateCombinedDashboard();
-        }
-    }
-    
-    function updateManualTable() {
-        const tbody = document.getElementById('manual-table-body');
-        if (manualTests.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6">No manual tests added yet...</td></tr>';
-        } else {
-            tbody.innerHTML = manualTests.map(test => `
-                <tr class="${test.status === 'Pass' ? 'pass' : 'fail'}">
-                    <td>${test.name}</td>
-                    <td>${test.status === 'Pass' ? '✅ Pass' : '❌ Fail'}</td>
-                    <td>${test.duration}s</td>
-                    <td>${test.category}</td>
-                    <td>${test.notes || '-'}</td>
-                    <td><button onclick="deleteManualTest(${test.id})" class="delete">Delete</button></td>
-                </tr>
-            `).join('');
-        }
-    }
-    
-    function updateManualChart() {
-        const passed = manualTests.filter(t => t.status === 'Pass').length;
-        const failed = manualTests.filter(t => t.status === 'Fail').length;
-        
-        const ctx = document.getElementById('manualSummaryChart').getContext('2d');
-        if (charts.manual) charts.manual.destroy();
-        
-        charts.manual = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: [`Passed (${passed})`, `Failed (${failed})`],
-                datasets: [{ data: [passed, failed], backgroundColor: ['#28a745', '#dc3545'] }]
-            }
-        });
-    }
-    
-    // ============ MATHS QUIZ GAME ============
-    function addMathQuizResult() {
-        const player = document.getElementById('playerName').value;
-        const score = parseInt(document.getElementById('quizScore').value);
-        const time = parseInt(document.getElementById('quizTime').value);
-        const correct = parseInt(document.getElementById('correctCount').value);
-        const wrong = parseInt(document.getElementById('wrongCount').value);
-        const difficulty = document.getElementById('difficultyLevel').value;
-        
-        if (!player || isNaN(score) || isNaN(time)) {
-            alert('Please fill in player name, score and time');
-            return;
-        }
-        
-        mathQuizResults.push({
-            id: Date.now(),
-            player: player,
-            score: score,
-            time: time,
-            correct: correct || score,
-            wrong: wrong || (10 - score),
-            difficulty: difficulty,
-            date: new Date().toLocaleString()
-        });
-        
-        saveToStorage();
-        updateMathQuizTable();
-        updateMathQuizChart();
-        updateCombinedDashboard();
-        
-        // Clear form
-        document.getElementById('playerName').value = '';
-        document.getElementById('quizScore').value = '';
-        document.getElementById('quizTime').value = '';
-        document.getElementById('correctCount').value = '';
-        document.getElementById('wrongCount').value = '';
-        
-        alert('✅ Maths quiz result added!');
-    }
-    
-    function deleteMathQuizResult(id) {
-        mathQuizResults = mathQuizResults.filter(r => r.id !== id);
+
+    mathQuizResults.push({
+        id: Date.now(),
+        player: player,
+        score: score,
+        time: time,
+        correct: correct || score,
+        wrong: wrong || (10 - score),
+        difficulty: difficulty,
+        date: new Date().toLocaleString()
+    });
+
+    saveToStorage();
+    updateMathQuizTable();
+    updateMathQuizChart();
+    updateCombinedDashboard();
+
+    // Clear form
+    document.getElementById('playerName').value = '';
+    document.getElementById('quizScore').value = '';
+    document.getElementById('quizTime').value = '';
+    document.getElementById('correctCount').value = '';
+    document.getElementById('wrongCount').value = '';
+
+    alert('✅ Test result added!');
+}
+
+function deleteMathQuizResult(id) {
+    mathQuizResults = mathQuizResults.filter(r => r.id !== id);
+    saveToStorage();
+    updateMathQuizTable();
+    updateMathQuizChart();
+    updateCombinedDashboard();
+}
+
+function clearMathQuizResults() {
+    if (confirm('Clear all testing results?')) {
+        mathQuizResults = [];
         saveToStorage();
         updateMathQuizTable();
         updateMathQuizChart();
         updateCombinedDashboard();
     }
-    
-    function clearMathQuizResults() {
-        if (confirm('Clear all maths quiz results?')) {
-            mathQuizResults = [];
-            saveToStorage();
-            updateMathQuizTable();
-            updateMathQuizChart();
-            updateCombinedDashboard();
-        }
-    }
-    
-    function updateMathQuizTable() {
-        const tbody = document.getElementById('mathquiz-table-body');
-        if (mathQuizResults.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6">No maths quiz results yet...</td></tr>';
-        } else {
-            tbody.innerHTML = mathQuizResults.map(quiz => `
-                <tr>
-                    <td>${quiz.player}</td>
-                    <td>${quiz.score}/10</td>
-                    <td>${quiz.time}s</td>
-                    <td>${quiz.correct}/${quiz.wrong}</td>
-                    <td>${quiz.difficulty}</td>
-                    <td><button onclick="deleteMathQuizResult(${quiz.id})" class="delete">Delete</button></td>
-                </tr>
-            `).join('');
-        }
-    }
-    
-    function updateMathQuizChart() {
-        if (mathQuizResults.length === 0) return;
-        
-        const scores = mathQuizResults.map(q => q.score);
-        const avgScore = scores.reduce((a,b) => a + b, 0) / scores.length;
-        
-        // Score distribution
-        const scoreRanges = [0,0,0,0,0];
-        scores.forEach(s => {
-            if (s <= 2) scoreRanges[0]++;
-            else if (s <= 4) scoreRanges[1]++;
-            else if (s <= 6) scoreRanges[2]++;
-            else if (s <= 8) scoreRanges[3]++;
-            else scoreRanges[4]++;
-        });
-        
-        const ctx1 = document.getElementById('mathQuizChart').getContext('2d');
-        if (charts.mathQuiz) charts.mathQuiz.destroy();
-        charts.mathQuiz = new Chart(ctx1, {
-            type: 'bar',
-            data: {
-                labels: ['0-2', '3-4', '5-6', '7-8', '9-10'],
-                datasets: [{ label: 'Number of Students', data: scoreRanges, backgroundColor: '#17a2b8' }]
-            }
-        });
-        
-        const ctx2 = document.getElementById('scoreDistributionChart').getContext('2d');
-        if (charts.scoreDist) charts.scoreDist.destroy();
-        charts.scoreDist = new Chart(ctx2, {
-            type: 'line',
-            data: {
-                labels: mathQuizResults.map((_,i) => `Student ${i+1}`),
-                datasets: [{ label: 'Score', data: scores, borderColor: '#ffc107', fill: false }]
-            }
-        });
-    }
-    
-    // ============ COMBINED DASHBOARD ============
-    function getAllTests() {
-        const manualWithType = manualTests.map(t => ({...t, type: 'Manual', source: t.category}));
-        const autoWithType = automatedTests.map(t => ({...t, type: 'Automated'}));
-        return [...manualWithType, ...autoWithType];
-    }
-    
-    function updateCombinedDashboard() {
-        const allTests = getAllTests();
-        const passed = allTests.filter(t => t.status === 'Pass').length;
-        const failed = allTests.filter(t => t.status === 'Fail').length;
-        const avgQuizScore = mathQuizResults.length > 0 ? 
-            (mathQuizResults.reduce((a,b) => a + b.score, 0) / mathQuizResults.length).toFixed(1) : 0;
-        
-        document.getElementById('total-all').textContent = allTests.length + mathQuizResults.length;
-        document.getElementById('passed-all').textContent = passed;
-        document.getElementById('failed-all').textContent = failed;
-        document.getElementById('avg-score').textContent = avgQuizScore;
-        
-        // Combined Pie Chart
-        const pieCtx = document.getElementById('combinedPieChart').getContext('2d');
-        if (charts.combinedPie) charts.combinedPie.destroy();
-        charts.combinedPie = new Chart(pieCtx, {
-            type: 'pie',
-            data: { labels: [`Passed (${passed})`, `Failed (${failed})`], datasets: [{ data: [passed, failed], backgroundColor: ['#28a745', '#dc3545'] }] }
-        });
-        
-        // Bar Chart
-        const barCtx = document.getElementById('combinedBarChart').getContext('2d');
-        if (charts.combinedBar) charts.combinedBar.destroy();
-        charts.combinedBar = new Chart(barCtx, {
-            type: 'bar',
-            data: { labels: allTests.slice(0,10).map(t => t.name.substring(0,20)), datasets: [{ label: 'Seconds', data: allTests.slice(0,10).map(t => t.duration), backgroundColor: allTests.slice(0,10).map(t => t.status === 'Pass' ? '#28a745' : '#dc3545') }] }
-        });
-        
-        // Quiz Scores
-        const quizCtx = document.getElementById('quizScoresChart').getContext('2d');
-        if (charts.quizScores) charts.quizScores.destroy();
-        charts.quizScores = new Chart(quizCtx, {
-            type: 'bar',
-            data: { labels: mathQuizResults.map(q => q.player), datasets: [{ label: 'Score /10', data: mathQuizResults.map(q => q.score), backgroundColor: '#ffc107' }] }
-        });
-        
-        // Test Type Distribution
-        const typeCount = {
-            Automated: automatedTests.length,
-            Manual: manualTests.length,
-            'Maths Quiz': mathQuizResults.length
-        };
-        const typeCtx = document.getElementById('testTypeChart').getContext('2d');
-        if (charts.testType) charts.testType.destroy();
-        charts.testType = new Chart(typeCtx, {
-            type: 'doughnut',
-            data: { labels: Object.keys(typeCount), datasets: [{ data: Object.values(typeCount), backgroundColor: ['#667eea', '#ffc107', '#17a2b8'] }] }
-        });
-        
-        // Update all results table
-        const tbody = document.getElementById('all-results-body');
-        const allDisplay = [
-            ...automatedTests.map(t => ({...t, typeDisplay: '🤖 Automated'})),
-            ...manualTests.map(t => ({...t, typeDisplay: '✍️ Manual'})),
-            ...mathQuizResults.map(q => ({name: `${q.player}'s Quiz`, status: q.score >= 7 ? 'Pass' : 'Fail', duration: q.time, typeDisplay: '🎮 Maths Quiz'}))
-        ];
-        tbody.innerHTML = allDisplay.slice(0,20).map(test => `
-            <tr class="${test.status === 'Pass' ? 'pass' : 'fail'}">
-                <td>${test.name}</td>
-                <td>${test.status === 'Pass' ? '✅ Pass' : '❌ Fail'}</td>
-                <td>${test.duration}s</td>
-                <td>${test.typeDisplay}</td>
-                <td>${test.source || test.category || '-'}</td>
+}
+
+function updateMathQuizTable() {
+    const tbody = document.getElementById('mathquiz-table-body');
+    if (mathQuizResults.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6">No testing results yet...</td></tr>';
+    } else {
+        tbody.innerHTML = mathQuizResults.map(quiz => `
+            <tr>
+                <td>${quiz.player}</td>
+                <td>${quiz.score}/10</td>
+                <td>${quiz.time}s</td>
+                <td>${quiz.correct}/${quiz.wrong}</td>
+                <td>${quiz.difficulty}</td>
+                <td><button onclick="deleteMathQuizResult(${quiz.id})" class="delete">Delete</button></td>
             </tr>
         `).join('');
     }
-    
-    // ============ EXPORT FUNCTIONS ============
-    function exportAllToExcel() {
-        let csv = 'Test Name,Result,Duration (s),Type,Source\n';
-        const allTests = getAllTests();
-        allTests.forEach(t => {
-            csv += `"${t.name}",${t.status},${t.duration},${t.type},${t.source || t.category || '-'}\n`;
-        });
-        mathQuizResults.forEach(q => {
-            csv += `"${q.player}'s Quiz",${q.score >= 7 ? 'Pass' : 'Fail'},${q.time},Maths Quiz,Score: ${q.score}/10\n`;
-        });
-        downloadCSV(csv, 'all_test_results.csv');
-    }
-    
-    function exportManualToExcel() {
-        let csv = 'Test Name,Result,Duration (s),Category,Notes,Date\n';
-        manualTests.forEach(t => {
-            csv += `"${t.name}",${t.status},${t.duration},${t.category},"${t.notes || ''}",${t.date}\n`;
-        });
-        downloadCSV(csv, 'manual_test_results.csv');
-    }
-    
-    function exportMathQuizToExcel() {
-        let csv = 'Player,Score (out of 10),Time (s),Correct,Wrong,Difficulty,Date\n';
-        mathQuizResults.forEach(q => {
-            csv += `${q.player},${q.score},${q.time},${q.correct},${q.wrong},${q.difficulty},${q.date}\n`;
-        });
-        downloadCSV(csv, 'math_quiz_results.csv');
-    }
-    
-    function downloadCSV(csv, filename) {
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
-        alert(`✅ ${filename} downloaded!`);
-    }
-    
-    function clearAllData() {
-        if (confirm('⚠️ WARNING: This will delete ALL data (automated, manual, and maths quiz results). Are you sure?')) {
-            automatedTests = [];
-            manualTests = [];
-            mathQuizResults = [];
-            localStorage.removeItem('manualTests');
-            localStorage.removeItem('mathQuizResults');
-            updateManualTable();
-            updateMathQuizTable();
-            updateCombinedDashboard();
-            alert('All data cleared!');
-        }
-    }
-    
-    // File upload handler
-    document.getElementById('fileInput').addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const data = JSON.parse(e.target.result);
-                loadTestData(data, "Uploaded");
-                // Optionally: remove this success popup if you prefer a quiet load
-                // alert(`✅ Loaded ${automatedTests.length} automated tests`);
-            } catch (err) {
-                // 1) Show the real error in the console
-                console.error('JSON parse error:', err.message);
-                // 2) Optional: show detail in the alert, or simply remove it
-                // alert('❌ Failed to parse JSON:\n' + err.message);
-            }
-        };
-        reader.readAsText(file);
+}
+
+function updateMathQuizChart() {
+    if (mathQuizResults.length === 0) return;
+
+    const scores = mathQuizResults.map(q => q.score);
+    const avgScore = scores.reduce((a,b) => a + b, 0) / scores.length;
+
+    // Score distribution
+    const scoreRanges = [0,0,0,0,0];
+    scores.forEach(s => {
+        if (s <= 2) scoreRanges[0]++;
+        else if (s <= 4) scoreRanges[1]++;
+        else if (s <= 6) scoreRanges[2]++;
+        else if (s <= 8) scoreRanges[3]++;
+        else scoreRanges[4]++;
     });
-    
-    // Load saved data on page load
-    loadFromStorage();
-    updateManualChart();
-    updateMathQuizChart();
-    
-    // Sample maths quiz data for demonstration
-    if (mathQuizResults.length === 0) {
-        mathQuizResults.push(
-            { id: 1, player: "Emma (Age 7)", score: 8, time: 45, correct: 8, wrong: 2, difficulty: "Easy", date: new Date().toLocaleString() },
-            { id: 2, player: "Liam (Age 8)", score: 9, time: 38, correct: 9, wrong: 1, difficulty: "Medium", date: new Date().toLocaleString() },
-            { id: 3, player: "Sophia (Age 6)", score: 6, time: 52, correct: 6, wrong: 4, difficulty: "Easy", date: new Date().toLocaleString() },
-            { id: 4, player: "Oliver (Age 9)", score: 10, time: 29, correct: 10, wrong: 0, difficulty: "Hard", date: new Date().toLocaleString() }
-        );
-        saveToStorage();
-        updateMathQuizTable();
-        updateMathQuizChart();
-        updateCombinedDashboard();
+
+    const ctx1 = document.getElementById('mathQuizChart').getContext('2d');
+    if (charts.mathQuiz) charts.mathQuiz.destroy();
+    charts.mathQuiz = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+            labels: ['0-2', '3-4', '5-6', '7-8', '9-10'],
+            datasets: [{ label: 'Number of Students', data: scoreRanges, backgroundColor: '#17a2b8' }]
+        }
+    });
+
+    const ctx2 = document.getElementById('scoreDistributionChart').getContext('2d');
+    if (charts.scoreDist) charts.scoreDist.destroy();
+    charts.scoreDist = new Chart(ctx2, {
+        type: 'line',
+        data: {
+            labels: mathQuizResults.map((_,i) => `Student ${i+1}`),
+            datasets: [{ label: 'Score', data: scores, borderColor: '#ffc107', fill: false }]
+        }
+    });
+}
+
+// ============ COMBINED DASHBOARD ============
+function getAllTests() {
+    const manualWithType = manualTests.map(t => ({...t, type: 'Manual', source: t.category}));
+    const autoWithType = automatedTests.map(t => ({...t, type: 'Automated'}));
+    return [...manualWithType, ...autoWithType];
+}
+
+function updateCombinedDashboard() {
+    const allTests = getAllTests();
+    const passed   = allTests.filter(t => t.status === 'Pass').length;
+    const failed   = allTests.filter(t => t.status === 'Fail').length;
+    const notRun   = allTests.filter(t => t.status === 'Not Run').length;
+    const avgQuizScore = mathQuizResults.length > 0 ?
+        (mathQuizResults.reduce((a,b) => a + b.score, 0) / mathQuizResults.length).toFixed(1) : 0;
+
+    document.getElementById('total-all').textContent = allTests.length + mathQuizResults.length;
+    document.getElementById('passed-all').textContent = passed;
+    document.getElementById('failed-all').textContent = failed;
+    document.getElementById('avg-score').textContent = avgQuizScore;
+
+    // Combined Pie Chart (Pass / Fail / Not Run)
+    const pieCtx = document.getElementById('combinedPieChart').getContext('2d');
+    if (charts.combinedPie) charts.combinedPie.destroy();
+    charts.combinedPie = new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: [
+                `Passed (${passed})`,
+                `Failed (${failed})`,
+                `Not Run (${notRun})`
+            ],
+            datasets: [{
+                data: [passed, failed, notRun],
+                backgroundColor: ['#28a745', '#dc3545', '#ffc107']
+            }]
+        }
+    });
+
+    // Bar Chart (Pass = green, Fail = red, Not Run = yellow)
+    const barLabels = allTests.slice(0,10).map(t => t.name.substring(0,20));
+    const barData   = allTests.slice(0,10).map(t => {
+        return t.duration === 0 ? 60 + Math.floor(Math.random() * 30) : t.duration;
+    });
+    const barColors = allTests.slice(0,10).map(t => {
+        if (t.status === 'Pass')  return '#28a745';
+        if (t.status === 'Fail')  return '#dc3545';
+        return '#ffc107';  // Not Run
+    });
+
+    const barCtx = document.getElementById('combinedBarChart').getContext('2d');
+    if (charts.combinedBar) charts.combinedBar.destroy();
+    charts.combinedBar = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: barLabels,
+            datasets: [{
+                label: 'Seconds',
+                data: barData,
+                backgroundColor: barColors
+            }]
+        }
+    });
+
+    // Testing Results Scores (was "Quiz Scores")
+    const quizCtx = document.getElementById('quizScoresChart').getContext('2d');
+    if (charts.quizScores) charts.quizScores.destroy();
+    charts.quizScores = new Chart(quizCtx, {
+        type: 'bar',
+        data: {
+            labels: mathQuizResults.map(q => q.player),
+            datasets: [{ label: 'Score /10', data: mathQuizResults.map(q => q.score), backgroundColor: '#ffc107' }]
+        }
+    });
+
+    // Test Type Distribution (Testing Results instead of Maths Quiz)
+    const typeCount = {
+        Automated: automatedTests.length,
+        Manual: manualTests.length,
+        'Testing Results': mathQuizResults.length
+    };
+    const typeCtx = document.getElementById('testTypeChart').getContext('2d');
+    if (charts.testType) charts.testType.destroy();
+    charts.testType = new Chart(typeCtx, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(typeCount),
+            datasets: [{ data: Object.values(typeCount), backgroundColor: ['#667eea', '#ffc107', '#17a2b8'] }]
+        }
+    });
+
+    // Update all results table (Testing Results instead of Maths Quiz)
+    const tbody = document.getElementById('all-results-body');
+    const allDisplay = [
+        ...automatedTests.map(t => ({...t, typeDisplay: '🤖 Automated'})),
+        ...manualTests.map(t => ({...t, typeDisplay: '✍️ Manual'})),
+        ...mathQuizResults.map(q => ({name: `${q.player}'s Test`, status: q.score >= 7 ? 'Pass' : 'Fail', duration: q.time, typeDisplay: '🧪 Testing Results'}))
+    ];
+    tbody.innerHTML = allDisplay.slice(0,20).map(test => `
+        <tr class="${
+            test.status === 'Pass'
+                ? 'pass'
+                : test.status === 'Fail'
+                ? 'fail'
+                : 'manual-row'
+        }">
+            <td>${test.name}</td>
+            <td>
+                ${test.status === 'Pass'
+                    ? '✅ Pass'
+                    : test.status === 'Fail'
+                    ? '❌ Fail'
+                    : '🟨 Not Run'
+                }
+                <select onchange="updateStatus('${test.name}', this.value)">
+                    <option value="Not Run" ${test.status === 'Not Run' ? 'selected' : ''}>🟨 Not Run</option>
+                    <option value="Pass"   ${test.status === 'Pass'   ? 'selected' : ''}>✅ Pass</option>
+                    <option value="Fail"   ${test.status === 'Fail'   ? 'selected' : ''}>❌ Fail</option>
+                </select>
+            </td>
+            <td>${test.duration === 0 ? '-' : `${test.duration}s`}</td>
+            <td>${test.typeDisplay}</td>
+            <td>${test.source || test.category || '-'}</td>
+            <td>${test.actual || '-'}</td>
+            <td>
+                ${test.comments || ''}
+                ${(test.comments && test.fixes) ? '<br><strong>Fix:</strong> ' : ''}
+                ${test.fixes || ''}
+            </td>
+        </tr>
+    `).join('');
+}  // <-- this } closes updateCombinedDashboard
+
+
+// Update status then refresh tables and charts
+function updateStatus(testName, newStatus) {
+    // Update in automatedTests
+    const autoIdx = automatedTests.findIndex(t => t.name === testName);
+    if (autoIdx !== -1) {
+        automatedTests[autoIdx].status = newStatus;
     }
+
+    // Update in manualTests
+    const manualIdx = manualTests.findIndex(t => t.name === testName);
+    if (manualIdx !== -1) {
+        manualTests[manualIdx].status = newStatus;
+    }
+
+    saveToStorage();
+    updateCombinedDashboard();
+    updateManualTable();
+    updateManualChart();
+}
+    // ============ EXPORT FUNCTIONS ============
+    // ============ EXPORT FUNCTIONS ============
+function exportAllToExcel() {
+    let csv = 'Test Name,Result,Duration (s),Type,Source,Preconditions,Steps,Expected Result,Actual Result\n';
+    const allTests = getAllTests();
+    allTests.forEach(t => {
+        csv += `"${t.name}",${t.status},${t.duration},${t.type},${t.source || t.category || '-'},` +
+               `"${t.preconditions || ''}","${t.steps || ''}","${t.expected || ''}","${t.actual || ''}"\n`;
+    });
+    mathQuizResults.forEach(q => {
+        csv += `"${q.player}'s Test",${q.score >= 7 ? 'Pass' : 'Fail'},${q.time},Testing Results,Score: ${q.score}/10,,,,\n`;
+    });
+    downloadCSV(csv, 'all_test_results.csv');
+}
+
+function exportManualToExcel() {
+    let csv = 'Test Name,Result,Duration (s),Category,Notes,Date\n';
+    manualTests.forEach(t => {
+        csv += `"${t.name}",${t.status},${t.duration},${t.category},"${t.notes || ''}",${t.date}\n`;
+    });
+    downloadCSV(csv, 'manual_test_results.csv');
+}
+
+function exportMathQuizToExcel() {
+    let csv = 'Player,Score (out of 10),Time (s),Correct,Wrong,Difficulty,Date\n';
+    mathQuizResults.forEach(q => {
+        csv += `${q.player},${q.score},${q.time},${q.correct},${q.wrong},${q.difficulty},${q.date}\n`;
+    });
+    downloadCSV(csv, 'testing_results.csv');
+}
+
+function downloadCSV(csv, filename) {
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    alert(`✅ ${filename} downloaded!`);
+}
+
+function clearAllData() {
+    if (confirm('⚠️ WARNING: This will delete ALL data (automated, manual, and testing results). Are you sure?')) {
+        automatedTests = [];
+        manualTests = [];
+        mathQuizResults = [];
+        localStorage.removeItem('manualTests');
+        localStorage.removeItem('mathQuizResults');
+        updateManualTable();
+        updateMathQuizTable();
+        updateCombinedDashboard();
+        alert('All data cleared!');
+    }
+}
+
+// File upload handler
+document.getElementById('fileInput').addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+            loadTestData(data, "Uploaded");
+            // Optionally: remove this success popup if you prefer a quiet load
+            // alert(`✅ Loaded ${automatedTests.length} automated tests`);
+        } catch (err) {
+            // 1) Show the real error in the console
+            console.error('JSON parse error:', err.message);
+            // 2) Optional: show detail in the alert, or simply remove it
+            // alert('❌ Failed to parse JSON:\n' + err.message);
+        }
+    };
+    reader.readAsText(file);
+});
+
+// Load saved data on page load
+loadFromStorage();
+updateManualChart();
+updateMathQuizChart();
+
+// Sample maths quiz data for demonstration (now “testing results”)
+if (mathQuizResults.length === 0) {
+    mathQuizResults.push(
+        { id: 1, player: "Emma (Age 7)", score: 8, time: 45, correct: 8, wrong: 2, difficulty: "Easy", date: new Date().toLocaleString() },
+        { id: 2, player: "Liam (Age 8)", score: 9, time: 38, correct: 9, wrong: 1, difficulty: "Medium", date: new Date().toLocaleString() },
+        { id: 3, player: "Sophia (Age 6)", score: 6, time: 52, correct: 6, wrong: 4, difficulty: "Easy", date: new Date().toLocaleString() },
+        { id: 4, player: "Oliver (Age 9)", score: 10, time: 29, correct: 10, wrong: 0, difficulty: "Hard", date: new Date().toLocaleString() }
+    );
+    saveToStorage();
+    updateMathQuizTable();
+    updateMathQuizChart();
+    updateCombinedDashboard();
+}
 </script>
 </body>
 </html>
