@@ -1,3 +1,15 @@
+with the index.html you have the option to upload your results that you have either collated manually or done through some kind of automation like Playwright as discussed below - you will need to arrage your data as a test-data.json and for it to be laid out in a JSON format  - so match the columns with the number of columns on the dashboard (the index.html) file here (got to this link https://willxxx7.github.io/EASY_TESTING/   or you can clone this repo and do it all locally yourself - this is designed to support your own methods of software testing on all your various solutions if you use it then some customisations of the html and JS and or CSS may be required or may not be required  - message me on Teams if you are not sure !!!!!
+
+so for basic method of doing tests this website accepts manual tests, and file uploads of .json type test results :
+so:
+1. do the tests (they could be done using PYTEST for example)  and convert to the correct .json file with the correct number of columns (an Ai will do this for you)
+2. upload to this website either on your system direct or here on my github pages version
+3. Go to the Dashboard to see the results , so you can do multiple uploads to this site then screenshot each dashboard for your submitted work (if you need help then message me!) 
+
+
+
+Playwright is automated testing software
+
 # 📊 Playwright Test Dashboard
 
 A simple, visual dashboard for viewing Playwright test results with charts and export options.
