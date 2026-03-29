@@ -2,6 +2,8 @@
 🚀 Instant Live Site
 Fork → your own username.github.io/EASY_TESTING/ → no server setup!
 
+You can create a JSON test file from virtually any test data or if you do some automated testing using something like Playwright this will be produced for you - make sure the numbers and titles of columns match upload your file and the dashboard is done :) 
+
 📊 Tests ANY Project
 
 🤖 Upload Playwright/pytest JSON (automated)
