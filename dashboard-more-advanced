@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Playwright Test Intelligence Dashboard</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            margin: 0;
+            background: #eef2f7;
+            padding: 24px 20px;
+        }
+        .dashboard-container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.02);
+            padding: 24px 28px;
+            transition: all 0.2s;
+        }
+        h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            background: linear-gradient(135deg, #1E2A5E, #2C3E6D);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+        }
+        .subhead {
+            color: #4a627a;
+            border-left: 4px solid #3b82f6;
+            padding-left: 16px;
+            margin: 8px 0 20px 0;
+            font-weight: 500;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin: 28px 0 32px 0;
+        }
+        .stat-tile {
+            border-radius: 28px;
+            padding: 18px 20px;
+            color: white;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+            transition: transform 0.2s ease;
+        }
+        .stat-tile:hover { transform: translateY(-3px); }
+        .stat-tile.total { background: linear-gradient(145deg, #2c3e66, #1f2c48); }
+        .stat-tile.passed { background: linear-gradient(145deg, #059669, #047857); }
+        .stat-tile.failed { background: linear-gradient(145deg, #e11d48, #be123c); }
+        .stat-tile.duration { background: linear-gradient(145deg, #0d9488, #0f766e); }
+        .stat-number-main {
+            font-size: 44px;
+            font-weight: 800;
+            line-height: 1;
+            margin: 8px 0 4px;
+        }
+        .stat-label-sm {
+            font-size: 14px;
+            opacity: 0.85;
+            letter-spacing: 0.3px;
+        }
+        .charts-2x2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        .chart-panel {
+            background: white;
+            border-radius: 24px;
+            padding: 18px 16px 16px 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: box-shadow 0.2s;
+        }
+        .chart-panel h3 {
+            margin: 0 0 16px 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-left: 3px solid #3b82f6;
+            padding-left: 12px;
+        }
+        canvas { max-height: 280px; width: 100%; }
+        .button-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px;
+            margin: 28px 0 20px;
+        }
+        .btn {
+            background: #f1f5f9;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #1e293b;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            box-shadow: 0 4px 8px rgba(37,99,235,0.2);
+        }
+        .btn-primary:hover { background: #1d4ed8; transform: scale(0.98); }
+        .btn-outline {
+            border: 1px solid #cbd5e1;
+            background: white;
+        }
+        .btn-outline:hover { background: #f8fafc; border-color: #94a3b8; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        th {
+            background: #f1f5f9;
+            padding: 14px 12px;
+            text-align: left;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        td {
+            padding: 12px 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .badge-pass {
+            background: #dcfce7;
+            color: #15803d;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 40px;
+            display: inline-block;
+            font-size: 0.75rem;
+        }
+        .badge-fail {
+            background: #ffe4e6;
+            color: #be123c;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 40px;
+        }
+        .footer-tip {
+            background: #fefce8;
+            border-radius: 20px;
+            padding: 18px 24px;
+            margin-top: 32px;
+            font-size: 0.85rem;
+            border-left: 5px solid #eab308;
+        }
+        code {
+            background: #eef2ff;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+        .json-hint {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 12px 20px;
+            margin-top: 16px;
+            font-size: 0.8rem;
+        }
+        @media (max-width: 760px) {
+            .charts-2x2 { grid-template-columns: 1fr; }
+            .stats-grid { gap: 12px; }
+            .card { padding: 16px; }
+        }
+        .gauge-wrapper { position: relative; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="dashboard-container">
+    <div class="card">
+        <h1>⚡ Playwright Test Analytics</h1>
+        <div class="subhead">Upload JSON results · Instant charts & insights · Support for multiple report structures</div>
+
+        <!-- stats row -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-tile total"><div>📋 Total Tests</div><div class="stat-number-main" id="totalCount">0</div><div class="stat-label-sm">all specs</div></div>
+            <div class="stat-tile passed"><div>✅ Passed</div><div class="stat-number-main" id="passedCount">0</div><div class="stat-label-sm">green tests</div></div>
+            <div class="stat-tile failed"><div>❌ Failed</div><div class="stat-number-main" id="failedCount">0</div><div class="stat-label-sm">failures</div></div>
+            <div class="stat-tile duration"><div>⏱️ Total duration</div><div class="stat-number-main" id="totalDurationSec">0</div><div class="stat-label-sm">seconds</div></div>
+        </div>
+
+        <!-- 4 primary charts -->
+        <div class="charts-2x2">
+            <div class="chart-panel"><h3>📊 Pass / Fail ratio</h3><canvas id="pieChartCanvas" width="400" height="280"></canvas></div>
+            <div class="chart-panel"><h3>📈 Test duration (sorted)</h3><canvas id="barChartCanvas" width="400" height="280"></canvas></div>
+            <div class="chart-panel"><h3>🏎️ Speed ranking (fast → slow)</h3><canvas id="speedRankCanvas" width="400" height="280"></canvas></div>
+            <div class="chart-panel"><h3>🎯 Pass rate gauge</h3><div style="position:relative"><canvas id="gaugeCanvas" width="400" height="240"></canvas><div id="gaugeCenterText" style="position:absolute; top:52%; left:50%; transform:translate(-50%,-50%); font-size:28px; font-weight:800; color:#15803d; pointer-events:none;">0%</div></div></div>
+        </div>
+        
+        <!-- additional trend + horizontal bars -->
+        <div class="charts-2x2">
+            <div class="chart-panel"><h3>📉 Duration trend (execution order)</h3><canvas id="trendCanvas" width="400" height="260"></canvas></div>
+            <div class="chart-panel"><h3>⏲️ Horizontal duration (slowest top)</h3><canvas id="horizontalCanvas" width="400" height="260"></canvas></div>
+        </div>
+
+        <!-- action buttons -->
+        <div class="button-bar">
+            <input type="file" id="jsonUploader" accept=".json" style="display:none" />
+            <button class="btn btn-primary" id="uploadBtn">📂 Upload JSON file</button>
+            <button class="btn btn-outline" id="sampleBtn">🔄 Load sample data</button>
+            <button class="btn btn-outline" id="copyExcelBtn">📋 Copy to Excel (CSV)</button>
+            <button class="btn btn-outline" id="exportCsvBtn">💾 Export CSV</button>
+        </div>
+
+        <!-- detailed table -->
+        <h2 style="margin: 28px 0 12px 0;">📋 Detailed test report</h2>
+        <div style="overflow-x: auto; border-radius: 20px; border: 1px solid #e2e8f0;">
+            <table id="resultsTable">
+                <thead><tr><th>Test name</th><th>Status</th><th>Duration (s)</th><th>Spec file</th><th>Performance</th></tr></thead>
+                <tbody id="tableBody"><tr><td colspan="5" style="text-align:center">📁 No data loaded — click "Upload JSON file" or "Load sample"</td></tr></tbody>
+            </table>
+        </div>
+
+        <div class="footer-tip">
+            💡 <strong>How to export valid Playwright JSON (two reliable methods):</strong><br/>
+            <strong>Method A (Playwright built-in JSON reporter):</strong> <code>npx playwright test --reporter=json > results.json</code><br/>
+            <strong>Method B (from HTML report):</strong> Open <code>playwright-report/index.html</code> → F12 console → run: 
+            <code>copy(JSON.stringify(window.playwrightReport))</code> → save as .json<br/>
+            <span style="font-size:0.75rem;">✅ This dashboard auto-detects nested suites, specs, and tests (supports both official JSON reporter and internal report structure).</span>
+        </div>
+        <div class="json-hint">
+            🧠 <strong>Accepted JSON formats:</strong> Playwright json reporter (array of suites) OR playwright-report extraction (suites[].specs[].tests[].results[]). Upload plain .json file.
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- GLOBAL STATE ----------
+    let currentTests = [];       // each test object: { name, status, durationSec, file, order }
+    let charts = {};
+
+    // ---------- FLEXIBLE JSON PARSER (supports Playwright official + extracted html report) ----------
+    function parsePlaywrightJson(jsonData) {
+        const testsArray = [];
+        
+        // case 1: direct array of suites (official reporter: json reporter output)
+        if (Array.isArray(jsonData)) {
+            for (const suite of jsonData) {
+                extractFromSuite(suite, testsArray);
+            }
+        }
+        // case 2: object with "suites" root (playwright-report extraction or custom)
+        else if (jsonData.suites && Array.isArray(jsonData.suites)) {
+            for (const suite of jsonData.suites) {
+                extractFromSuite(suite, testsArray);
+            }
+        }
+        // case 3: maybe just a single suite object
+        else if (jsonData.specs || jsonData.tests) {
+            extractFromSuite(jsonData, testsArray);
+        }
+        // case 4: flattened "tests" array
+        else if (jsonData.tests && Array.isArray(jsonData.tests)) {
+            for (const t of jsonData.tests) {
+                let status = 'unknown';
+                let durationMs = 0;
+                if (t.results && t.results.length) {
+                    status = t.results[0].status === 'passed' ? 'Pass' : (t.results[0].status === 'failed' ? 'Fail' : 'unknown');
+                    durationMs = t.results[0].duration || 0;
+                } else {
+                    status = (t.status === 'passed' || t.status === 'Pass') ? 'Pass' : (t.status === 'failed' ? 'Fail' : 'unknown');
+                    durationMs = t.duration || t.time || 0;
+                }
+                testsArray.push({
+                    name: t.title || t.name || 'Unnamed test',
+                    status: (status === 'passed' || status === 'Pass') ? 'Pass' : (status === 'failed' || status === 'Fail') ? 'Fail' : 'unknown',
+                    durationSec: (durationMs || 0) / 1000,
+                    file: t.file ? (t.file.split('/').pop() || t.file) : 'unknown.spec.ts'
+                });
+            }
+        }
+        
+        if (testsArray.length === 0) {
+            throw new Error('No test cases found in JSON structure. Expected Playwright JSON reporter format (suites/specs/tests).');
+        }
+        return testsArray;
+    }
+
+    function extractFromSuite(suite, collector) {
+        if (!suite) return;
+        // if suite has specs array (playwright-report style)
+        if (suite.specs && Array.isArray(suite.specs)) {
+            for (const spec of suite.specs) {
+                const fileName = spec.file ? (spec.file.split('/').pop() || spec.file) : 'unknown.spec.ts';
+                if (spec.tests && Array.isArray(spec.tests)) {
+                    for (const test of spec.tests) {
+                        let status = 'unknown';
+                        let durationMs = 0;
+                        if (test.results && test.results.length > 0) {
+                            const res = test.results[0];
+                            status = (res.status === 'passed' || res.status === 'Pass') ? 'Pass' : (res.status === 'failed' ? 'Fail' : 'unknown');
+                            durationMs = res.duration || 0;
+                        } else {
+                            status = (test.status === 'passed' || test.status === 'Pass') ? 'Pass' : (test.status === 'failed' ? 'Fail' : 'unknown');
+                            durationMs = test.duration || 0;
+                        }
+                        collector.push({
+                            name: test.title || test.name || 'Test',
+                            status: status,
+                            durationSec: durationMs / 1000,
+                            file: fileName
+                        });
+                    }
+                }
+            }
+        }
+        // if suite has tests directly (some variants)
+        else if (suite.tests && Array.isArray(suite.tests)) {
+            for (const test of suite.tests) {
+                let status = 'unknown';
+                let durationMs = 0;
+                if (test.results && test.results.length) {
+                    status = (test.results[0].status === 'passed') ? 'Pass' : 'Fail';
+                    durationMs = test.results[0].duration || 0;
+                } else {
+                    status = (test.status === 'passed') ? 'Pass' : (test.status === 'failed' ? 'Fail' : 'unknown');
+                    durationMs = test.duration || 0;
+                }
+                collector.push({
+                    name: test.title || test.name || 'Test case',
+                    status: status,
+                    durationSec: durationMs / 1000,
+                    file: suite.file ? (suite.file.split('/').pop() || suite.file) : 'suite.spec.ts'
+                });
+            }
+        }
+        // recursive if there are nested suites
+        else if (suite.suites && Array.isArray(suite.suites)) {
+            for (const child of suite.suites) {
+                extractFromSuite(child, collector);
+            }
+        }
+    }
+
+    // ---------- DASHBOARD UPDATE ----------
+    function refreshDashboard() {
+        const total = currentTests.length;
+        const passed = currentTests.filter(t => t.status === 'Pass').length;
+        const failed = currentTests.filter(t => t.status === 'Fail').length;
+        const totalDurationSec = currentTests.reduce((sum, t) => sum + (isNaN(t.durationSec) ? 0 : t.durationSec), 0);
+        
+        document.getElementById('totalCount').innerText = total;
+        document.getElementById('passedCount').innerText = passed;
+        document.getElementById('failedCount').innerText = failed;
+        document.getElementById('totalDurationSec').innerText = totalDurationSec.toFixed(1);
+        
+        // update table
+        const tbody = document.getElementById('tableBody');
+        if (total === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">📂 No test data — please upload a valid Playwright JSON file</td></tr>';
+        } else {
+            const maxDur = Math.max(...currentTests.map(t => t.durationSec), 0.001);
+            tbody.innerHTML = currentTests.map(test => {
+                let perfBadge = '';
+                if (test.durationSec < 0.5) perfBadge = '⚡ Fast';
+                else if (test.durationSec < 1.2) perfBadge = '✓ Normal';
+                else perfBadge = '🐢 Slow';
+                const statusBadge = test.status === 'Pass' 
+                    ? '<span class="badge-pass">✅ Pass</span>' 
+                    : '<span class="badge-fail">❌ Fail</span>';
+                return `<tr style="background:${test.status === 'Pass' ? '#fefdf8' : '#fff6f5'}">
+                            <td style="font-weight:500">${escapeHtml(test.name)}</td>
+                            <td>${statusBadge}</td>
+                            <td>${test.durationSec.toFixed(2)}s</td>
+                            <td>${escapeHtml(test.file)}</td>
+                            <td>${perfBadge}</td>
+                        </tr>`;
+            }).join('');
+        }
+        
+        // Update all charts
+        updatePieChart(passed, failed);
+        updateBarChart(currentTests);
+        updateSpeedRankChart(currentTests);
+        updateGaugeChart(passed, total);
+        updateTrendChart(currentTests);
+        updateHorizontalSlowest(currentTests);
+    }
+    
+    function escapeHtml(str) { return String(str).replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;});}
+    
+    function updatePieChart(passed, failed) {
+        const ctx = document.getElementById('pieChartCanvas').getContext('2d');
+        if (charts.pie) charts.pie.destroy();
+        charts.pie = new Chart(ctx, {
+            type: 'pie',
+            data: { labels: [`✅ Passed (${passed})`, `❌ Failed (${failed})`], datasets: [{ data: [passed, failed], backgroundColor: ['#10b981', '#f43f5e'], borderWidth: 0 }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+    
+    function updateBarChart(tests) {
+        const ctx = document.getElementById('barChartCanvas').getContext('2d');
+        if (charts.bar) charts.bar.destroy();
+        const sorted = [...tests].sort((a,b) => b.durationSec - a.durationSec);
+        const labels = sorted.map(t => t.name.length > 22 ? t.name.slice(0,20)+'..' : t.name);
+        const durations = sorted.map(t => t.durationSec);
+        const colors = sorted.map(t => t.status === 'Pass' ? '#34d399' : '#fb7185');
+        charts.bar = new Chart(ctx, {
+            type: 'bar',
+            data: { labels, datasets: [{ label: 'Duration (seconds)', data: durations, backgroundColor: colors, borderRadius: 8 }] },
+            options: { responsive: true, maintainAspectRatio: true, scales: { y: { beginAtZero: true, title: { display: true, text: 'seconds' } } }, plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.raw.toFixed(2)} sec` } } } }
+        });
+    }
+    
+    function updateSpeedRankChart(tests) {
+        const ctx = document.getElementById('speedRankCanvas').getContext('2d');
+        if (charts.speedRank) charts.speedRank.destroy();
+        const sortedFast = [...tests].sort((a,b) => a.durationSec - b.durationSec);
+        const labels = sortedFast.map(t => t.name.length > 24 ? t.name.slice(0,22)+'..' : t.name);
+        const dataFast = sortedFast.map(t => t.durationSec);
+        const colorsGrad = sortedFast.map((_, idx) => {
+            if (idx < sortedFast.length * 0.33) return '#22c55e';
+            if (idx < sortedFast.length * 0.66) return '#facc15';
+            return '#f97316';
+        });
+        charts.speedRank = new Chart(ctx, {
+            type: 'bar',
+            data: { labels, datasets: [{ label: 'Duration (seconds)', data: dataFast, backgroundColor: colorsGrad, borderRadius: 6 }] },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: true, scales: { x: { beginAtZero: true, title: { display: true, text: 'seconds' } } }, plugins: { legend: { display: false } } }
+        });
+    }
+    
+    function updateGaugeChart(passed, total) {
+        const ctx = document.getElementById('gaugeCanvas').getContext('2d');
+        if (charts.gauge) charts.gauge.destroy();
+        const rate = total === 0 ? 0 : (passed / total) * 100;
+        document.getElementById('gaugeCenterText').innerText = `${Math.round(rate)}%`;
+        charts.gauge = new Chart(ctx, {
+            type: 'doughnut',
+            data: { labels: ['Pass rate', 'Remaining'], datasets: [{ data: [rate, 100-rate], backgroundColor: ['#10b981', '#e2e8f0'], borderWidth: 0, cutout: '70%' }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.raw.toFixed(1)}%` } }, legend: { position: 'bottom' } } }
+        });
+    }
+    
+    function updateTrendChart(tests) {
+        const ctx = document.getElementById('trendCanvas').getContext('2d');
+        if (charts.trend) charts.trend.destroy();
+        const durations = tests.map(t => t.durationSec);
+        const labels = tests.map((_, i) => `#${i+1}`);
+        const pointColors = tests.map(t => t.status === 'Pass' ? '#22c55e' : '#ef4444');
+        charts.trend = new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets: [{ label: 'Duration (seconds)', data: durations, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.05)', fill: true, tension: 0.3, pointBackgroundColor: pointColors, pointBorderColor: '#fff', pointRadius: 5 }] },
+            options: { responsive: true, maintainAspectRatio: true, scales: { y: { beginAtZero: true, title: { display: true, text: 'seconds' } } }, plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.raw.toFixed(2)} sec` } } } }
+        });
+    }
+    
+    function updateHorizontalSlowest(tests) {
+        const ctx = document.getElementById('horizontalCanvas').getContext('2d');
+        if (charts.horizontal) charts.horizontal.destroy();
+        const sortedSlow = [...tests].sort((a,b) => b.durationSec - a.durationSec).slice(0, 10);
+        const labels = sortedSlow.map(t => t.name.length > 28 ? t.name.slice(0,26)+'..' : t.name);
+        const durations = sortedSlow.map(t => t.durationSec);
+        const colors = sortedSlow.map(t => t.status === 'Pass' ? '#2dd4bf' : '#f87171');
+        charts.horizontal = new Chart(ctx, {
+            type: 'bar',
+            data: { labels, datasets: [{ label: 'Duration (seconds)', data: durations, backgroundColor: colors, borderRadius: 6 }] },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: true, scales: { x: { beginAtZero: true, title: { display: true, text: 'seconds' } } }, plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.raw.toFixed(2)} s` } } } }
+        });
+    }
+    
+    // ---------- LOAD DATA ----------
+    function setTestData(newTests) {
+        currentTests = newTests.map((t, idx) => ({ ...t, order: idx }));
+        refreshDashboard();
+    }
+    
+    function loadFromJsonObject(jsonObj) {
+        try {
+            const parsedTests = parsePlaywrightJson(jsonObj);
+            if (!parsedTests.length) throw new Error('No tests extracted');
+            setTestData(parsedTests);
+            return true;
+        } catch (err) {
+            console.error(err);
+            alert(`❌ Invalid JSON structure: ${err.message}\n\nPlease ensure the file follows Playwright JSON reporter format (suites -> specs -> tests). Try sample data for reference.`);
+            return false;
+        }
+    }
+    
+    // sample data (representative of real playwright run)
+    const SAMPLE_PLAYWRIGHT_JSON = {
+        "suites": [{
+            "specs": [
+                { "file": "tests/login.spec.ts", "tests": [ { "title": "Login with valid credentials", "results": [{"status": "passed", "duration": 823}] }, { "title": "Login shows error on wrong password", "results": [{"status": "passed", "duration": 512}] } ] },
+                { "file": "tests/dashboard.spec.ts", "tests": [ { "title": "Dashboard loads stats", "results": [{"status": "passed", "duration": 345}] }, { "title": "User menu dropdown", "results": [{"status": "failed", "duration": 1876}] } ] },
+                { "file": "tests/payment.spec.ts", "tests": [ { "title": "Checkout flow success", "results": [{"status": "passed", "duration": 3200}] }, { "title": "Apply discount coupon", "results": [{"status": "failed", "duration": 987}] }, { "title": "Payment validation", "results": [{"status": "passed", "duration": 410}] } ] },
+                { "file": "tests/leaderboard.spec.ts", "tests": [ { "title": "Leaderboard sorts by score", "results": [{"status": "passed", "duration": 298}] }, { "title": "Pagination works", "results": [{"status": "passed", "duration": 604}] } ] }
+            ]
+        }]
+    };
+    
+    // event handlers
+    document.getElementById('uploadBtn').addEventListener('click', () => {
+        document.getElementById('jsonUploader').click();
+    });
+    document.getElementById('jsonUploader').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const parsedJson = JSON.parse(ev.target.result);
+                loadFromJsonObject(parsedJson);
+            } catch (err) {
+                alert(`❌ Invalid JSON file: ${err.message}\n\nPlease upload a valid .json file exported from Playwright.`);
+            }
+            e.target.value = '';
+        };
+        reader.readAsText(file);
+    });
+    
+    document.getElementById('sampleBtn').addEventListener('click', () => {
+        loadFromJsonObject(SAMPLE_PLAYWRIGHT_JSON);
+    });
+    
+    document.getElementById('copyExcelBtn').addEventListener('click', () => {
+        if (!currentTests.length) { alert('No data to copy. Load a JSON report first.'); return; }
+        let csvRows = [["Test Name","Status","Duration (seconds)","Spec File"]];
+        currentTests.forEach(t => { csvRows.push([t.name, t.status, t.durationSec.toFixed(2), t.file]); });
+        const csvText = csvRows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+        navigator.clipboard.writeText(csvText).then(() => alert('✅ Copied to clipboard! Paste into Excel / Sheets.')).catch(() => alert('Manual copy failed, but you can export CSV.'));
+    });
+    
+    document.getElementById('exportCsvBtn').addEventListener('click', () => {
+        if (!currentTests.length) { alert('No data to export. Load report first.'); return; }
+        let csvRows = [["Test Name","Status","Duration (seconds)","Spec File"]];
+        currentTests.forEach(t => { csvRows.push([t.name, t.status, t.durationSec.toFixed(2), t.file]); });
+        const csvText = csvRows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+        const blob = new Blob([csvText], { type: "text/csv" });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `playwright_tests_${new Date().toISOString().slice(0,19)}.csv`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    });
+    
+    // auto load sample data on page load for demo
+    loadFromJsonObject(SAMPLE_PLAYWRIGHT_JSON);
+</script>
+</body>
+</html>
